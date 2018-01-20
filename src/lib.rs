@@ -1,15 +1,15 @@
 pub mod lexer;
 pub mod parser;
-// pub mod generator;
+pub mod generator;
 
 #[derive(Debug,Clone)]
 pub struct AST {
-    symbol: NonTerminalSymbol,
+    symbol: Symbol,
     children: Vec<AST>
 }
 
 impl AST {
-    fn new(symbol: NonTerminalSymbol, children: Vec<AST>) -> AST {
+    fn new(symbol: Symbol, children: Vec<AST>) -> AST {
         AST {
             symbol,
             children
@@ -47,21 +47,7 @@ pub enum ExpressionType {
 }
 
 #[derive(Debug,PartialEq,Clone)]
-pub enum FactorType {
-    Expression,
-    UnaryOperation,
-    IntegerLiteral
-}
-
-#[derive(Debug,PartialEq,Clone)]
-pub enum TermType {
-    Expression,
-    UnaryOperation,
-    IntegerLiteral
-}
-
-#[derive(Debug,PartialEq,Clone)]
-pub enum NonTerminalSymbol {
+pub enum Symbol {
     Program,
     Function(String),
     Statement(StatementType),

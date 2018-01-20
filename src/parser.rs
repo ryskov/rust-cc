@@ -1,9 +1,8 @@
 use Token;
 use Keyword;
 use AST;
-use NonTerminalSymbol;
+use Symbol;
 use StatementType;
-use FactorType;
 use UnaryOperator;
 use BinaryOperator;
 
@@ -59,7 +58,7 @@ impl Parser {
     fn parse_program(&mut self) -> AST {
         let function = self.parse_function();
 
-        AST::new(NonTerminalSymbol::Program, vec![function])
+        AST::new(Symbol::Program, vec![function])
     }
 
     fn parse_function(&mut self) -> AST {
@@ -102,7 +101,7 @@ impl Parser {
             panic!("Expected '}}', got {:?}", token);
         }
 
-        AST::new(NonTerminalSymbol::Function(function_name), vec![statement])
+        AST::new(Symbol::Function(function_name), vec![statement])
     }
 
     fn parse_statement(&mut self) -> AST {
@@ -116,7 +115,6 @@ impl Parser {
             panic!("Expected whitespace");
         }
 
-        println!("Parsing expression, current tokens {:#?}", self.tokens);
         let expression = self.parse_expression();
 
         let token = self.next_token();
@@ -125,7 +123,7 @@ impl Parser {
             panic!("Expected ';', got {:?}", token);
         }
 
-        AST::new(NonTerminalSymbol::Statement(StatementType::Return), vec![expression])
+        AST::new(Symbol::Statement(StatementType::Return), vec![expression])
     } 
 
     fn parse_expression(&mut self) -> AST {
@@ -146,10 +144,10 @@ impl Parser {
 
             last_result = match token {
                 Token::Addition => {
-                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Addition), vec![first_child, next_term]))
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::Addition), vec![first_child, next_term]))
                 },
                 Token::Multiplication => {
-                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Subtraction), vec![first_child, next_term]))
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::Subtraction), vec![first_child, next_term]))
                 },
                 _ => { panic!("Could not parse {:?} in expression", token); }
             };
@@ -157,9 +155,14 @@ impl Parser {
             next = self.peek();
         }
 
+        // match last_result {
+        //     Some(ast) => AST::new(Symbol::Expression, vec![ast]),
+        //     None => AST::new(Symbol::Expression, vec![term])
+        // }
+
         match last_result {
-            Some(ast) => AST::new(NonTerminalSymbol::Expression, vec![ast]),
-            None => AST::new(NonTerminalSymbol::Expression, vec![term])
+            Some(ast) => ast,
+            None => term
         }
     }
 
@@ -181,10 +184,10 @@ impl Parser {
 
             last_result = match token {
                 Token::Division => {
-                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Division), vec![first_child, next_factor]))
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::Division), vec![first_child, next_factor]))
                 },
                 Token::Multiplication => {
-                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Multiplication), vec![first_child, next_factor]))
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::Multiplication), vec![first_child, next_factor]))
                 },
                 _ => { panic!("Could not parse {:?} in term", token); }
             };
@@ -193,9 +196,14 @@ impl Parser {
         }
 
         match last_result {
-            Some(ast) => AST::new(NonTerminalSymbol::Term, vec![ast]),
-            None => AST::new(NonTerminalSymbol::Term, vec![factor])
+            Some(ast) => ast,
+            None => factor
         }
+
+        // match last_result {
+        //     Some(ast) => AST::new(Symbol::Term, vec![ast]),
+        //     None => AST::new(Symbol::Term, vec![factor])
+        // }
     }
 
     fn parse_factor(&mut self) -> AST {
@@ -211,7 +219,8 @@ impl Parser {
                     panic!("Expected ')', but got {:?}", token);
                 }
 
-                AST::new(NonTerminalSymbol::Factor, vec![expression])
+                expression
+                // AST::new(Symbol::Factor, vec![expression])
             },
             Token::Minus | Token::BitwiseComplementOperator | Token::LogicalNegationOperator => {
                 let factor = self.parse_factor();
@@ -223,14 +232,15 @@ impl Parser {
                     _ => panic!("Should never go here")
                 };
 
-                let unary_operation = AST::new(NonTerminalSymbol::UnaryOperator(unary_operation), vec![factor]);
+                let unary_operation = AST::new(Symbol::UnaryOperator(unary_operation), vec![factor]);
 
-                AST::new(NonTerminalSymbol::Factor, vec![unary_operation])
+                unary_operation
+                // AST::new(Symbol::Factor, vec![unary_operation])
             },
             Token::IntegerLiteral(value) => {
-                let integer = AST::new(NonTerminalSymbol::Constant(value), Vec::new());
-
-                AST::new(NonTerminalSymbol::Factor, vec![integer])
+                let integer = AST::new(Symbol::Constant(value), Vec::new());
+                integer
+              //  AST::new(Symbol::Factor, vec![integer])
             },
             _ => { panic!("Invalid factor {:?}", token); }
         }
