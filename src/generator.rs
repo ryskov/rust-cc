@@ -64,7 +64,10 @@ impl Generator {
                             },
                             _ => { panic!("Unsupported unary operator"); }
                         } 
-                    }
+                    },
+                    &ExpressionType::BinaryOperation(ref binary_operator) => {
+                        panic!("Binary operation now supported yet");
+                    } 
                 }
                 self.current_expression = Some(expression_type.clone());
             },

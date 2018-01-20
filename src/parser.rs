@@ -3,8 +3,9 @@ use Keyword;
 use AST;
 use NonTerminalSymbol;
 use StatementType;
-use ExpressionType;
+use FactorType;
 use UnaryOperator;
+use BinaryOperator;
 
 struct Parser {
     tokens: Vec<Token>
@@ -29,6 +30,30 @@ impl Parser {
         }
         
         token
+    }
+
+    fn peek(&mut self) -> Token {
+        let mut idx = 0;
+
+        loop {
+            let token = &self.tokens[idx];
+
+            if token != &Token::Space && token != &Token::NewLine {
+                return (*token).clone();
+            }
+
+            idx += 1;
+        }
+    }
+
+    fn next_is_space(&mut self) -> bool {
+        let token = &self.tokens[0];
+        
+        match token {
+            &Token::NewLine => true,
+            &Token::Space => true,
+            _ => false
+        }
     }
 
     fn parse_program(&mut self) -> AST {
@@ -80,16 +105,6 @@ impl Parser {
         AST::new(NonTerminalSymbol::Function(function_name), vec![statement])
     }
 
-    fn next_is_space(&mut self) -> bool {
-        let token = &self.tokens[0];
-        
-        match token {
-            &Token::NewLine => true,
-            &Token::Space => true,
-            _ => false
-        }
-    }
-
     fn parse_statement(&mut self) -> AST {
         let token = self.next_token();
 
@@ -101,6 +116,7 @@ impl Parser {
             panic!("Expected whitespace");
         }
 
+        println!("Parsing expression, current tokens {:#?}", self.tokens);
         let expression = self.parse_expression();
 
         let token = self.next_token();
@@ -113,25 +129,110 @@ impl Parser {
     } 
 
     fn parse_expression(&mut self) -> AST {
+        let term = self.parse_term();
+
+        let mut last_result: Option<AST> = None;
+
+        let mut next = self.peek();
+
+        while next == Token::Addition || next == Token::Minus {
+            let token = self.next_token();
+            let next_term = self.parse_term();
+
+            let first_child = match last_result {
+                Some(ref ast) => (*ast).clone(),
+                None => term.clone()
+            };
+
+            last_result = match token {
+                Token::Addition => {
+                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Addition), vec![first_child, next_term]))
+                },
+                Token::Multiplication => {
+                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Subtraction), vec![first_child, next_term]))
+                },
+                _ => { panic!("Could not parse {:?} in expression", token); }
+            };
+
+            next = self.peek();
+        }
+
+        match last_result {
+            Some(ast) => AST::new(NonTerminalSymbol::Expression, vec![ast]),
+            None => AST::new(NonTerminalSymbol::Expression, vec![term])
+        }
+    }
+
+    fn parse_term(&mut self) -> AST {
+        let factor = self.parse_factor();
+
+        let mut last_result: Option<AST> = None;
+
+        let mut next = self.peek();
+
+        while next == Token::Multiplication || next == Token::Division {
+            let token = self.next_token();
+            let next_factor = self.parse_factor();
+
+            let first_child = match last_result {
+                Some(ref ast) => (*ast).clone(),
+                None => factor.clone()
+            };
+
+            last_result = match token {
+                Token::Division => {
+                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Division), vec![first_child, next_factor]))
+                },
+                Token::Multiplication => {
+                    Some(AST::new(NonTerminalSymbol::BinaryOperator(BinaryOperator::Multiplication), vec![first_child, next_factor]))
+                },
+                _ => { panic!("Could not parse {:?} in term", token); }
+            };
+
+            next = self.peek();
+        }
+
+        match last_result {
+            Some(ast) => AST::new(NonTerminalSymbol::Term, vec![ast]),
+            None => AST::new(NonTerminalSymbol::Term, vec![factor])
+        }
+    }
+
+    fn parse_factor(&mut self) -> AST {
         let token = self.next_token();
 
         match token {
+            Token::OpenParen => {
+                let expression = self.parse_expression();
+
+                let token = self.next_token();
+
+                if token != Token::CloseParen {
+                    panic!("Expected ')', but got {:?}", token);
+                }
+
+                AST::new(NonTerminalSymbol::Factor, vec![expression])
+            },
+            Token::Minus | Token::BitwiseComplementOperator | Token::LogicalNegationOperator => {
+                let factor = self.parse_factor();
+
+                let unary_operation = match &token {
+                    &Token::Minus => UnaryOperator::Negation,
+                    &Token::BitwiseComplementOperator => UnaryOperator::BitwiseComplement,
+                    &Token::LogicalNegationOperator => UnaryOperator::LogicalNegation,
+                    _ => panic!("Should never go here")
+                };
+
+                let unary_operation = AST::new(NonTerminalSymbol::UnaryOperator(unary_operation), vec![factor]);
+
+                AST::new(NonTerminalSymbol::Factor, vec![unary_operation])
+            },
             Token::IntegerLiteral(value) => {
-                AST::new(NonTerminalSymbol::Expression(ExpressionType::Constant(value)), Vec::new())
+                let integer = AST::new(NonTerminalSymbol::Constant(value), Vec::new());
+
+                AST::new(NonTerminalSymbol::Factor, vec![integer])
             },
-            Token::NegationOperator => {
-                let expression = self.parse_expression();
-                AST::new(NonTerminalSymbol::Expression(ExpressionType::UnaryOperation(UnaryOperator::Negation)), vec![expression])
-            },
-            Token::BitwiseComplementOperator => {
-                let expression = self.parse_expression();
-                AST::new(NonTerminalSymbol::Expression(ExpressionType::UnaryOperation(UnaryOperator::BitwiseComplement)), vec![expression])
-            },
-            Token::LogicalNegationOperator => {
-                let expression = self.parse_expression();
-                AST::new(NonTerminalSymbol::Expression(ExpressionType::UnaryOperation(UnaryOperator::LogicalNegation)), vec![expression])
-            },
-            _ => panic!("Invalid expression: {:?}", token)
+            _ => { panic!("Invalid factor {:?}", token); }
         }
     }
 

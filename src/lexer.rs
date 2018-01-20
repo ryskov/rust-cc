@@ -88,7 +88,7 @@ impl Lexer {
                 },
                 '-' => {
                     self.pos += 1;
-                    Token::NegationOperator
+                    Token::Minus
                 },
                 '~' => {
                     self.pos += 1;
@@ -97,6 +97,18 @@ impl Lexer {
                 '!' => {
                     self.pos += 1;
                     Token::LogicalNegationOperator
+                },
+                '+' => {
+                    self.pos += 1;
+                    Token::Addition
+                },
+                '*' => {
+                    self.pos += 1;
+                    Token::Multiplication
+                },
+                '/' => {
+                    self.pos += 1;
+                    Token::Division
                 },
                 c if c.is_alphabetic() => {
                     let end_byte_offset = self.scan_until(current_byte_offset, |c| {

@@ -1,8 +1,8 @@
 pub mod lexer;
 pub mod parser;
-pub mod generator;
+// pub mod generator;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct AST {
     symbol: NonTerminalSymbol,
     children: Vec<AST>
@@ -17,7 +17,7 @@ impl AST {
     } 
 } 
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum StatementType {
     Return,
     VariableDeclaration,
@@ -32,26 +32,54 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug,PartialEq,Clone)]
-pub enum ExpressionType {
-    Constant(usize),
-    UnaryOperation(UnaryOperator)
+pub enum BinaryOperator {
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
+pub enum ExpressionType {
+    Constant(usize),
+    UnaryOperation(UnaryOperator),
+    BinaryOperation(BinaryOperator)
+}
+
+#[derive(Debug,PartialEq,Clone)]
+pub enum FactorType {
+    Expression,
+    UnaryOperation,
+    IntegerLiteral
+}
+
+#[derive(Debug,PartialEq,Clone)]
+pub enum TermType {
+    Expression,
+    UnaryOperation,
+    IntegerLiteral
+}
+
+#[derive(Debug,PartialEq,Clone)]
 pub enum NonTerminalSymbol {
     Program,
     Function(String),
     Statement(StatementType),
-    Expression(ExpressionType)
+    Expression,
+    Term,
+    Factor,
+    Constant(usize),
+    UnaryOperator(UnaryOperator),
+    BinaryOperator(BinaryOperator)
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum Keyword {
     Int,
     Return
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum Token {
     OpenBrace,
     CloseBrace,
@@ -63,7 +91,10 @@ pub enum Token {
     IntegerLiteral(usize),
     NewLine,
     Space,
-    NegationOperator,
+    Minus,
     BitwiseComplementOperator,
-    LogicalNegationOperator
+    LogicalNegationOperator,
+    Addition,
+    Multiplication,
+    Division
 }

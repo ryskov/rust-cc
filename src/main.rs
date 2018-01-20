@@ -2,7 +2,7 @@ extern crate cc;
 
 use cc::lexer;
 use cc::parser;
-use cc::generator;
+// use cc::generator;
 
 use std::env;
 use std::fs::File;
@@ -30,28 +30,28 @@ fn main() {
 
     println!("Parsing complete: {:#?}", ast);
 
-    let assembly = generator::generate(ast);
+    // let assembly = generator::generate(ast);
 
-    let base_path = &file_name.to_string()[0..file_name.len() - 2];
-    let out_file = format!("{}.s", base_path);
+    // let base_path = &file_name.to_string()[0..file_name.len() - 2];
+    // let out_file = format!("{}.s", base_path);
 
-    let out_path = Path::new(&out_file);
-    println!("Writing output to {}", out_path.display());
+    // let out_path = Path::new(&out_file);
+    // println!("Writing output to {}", out_path.display());
 
-    let mut file = match File::create(&out_path) {
-        Err(why) => panic!("Could not create {}: {}", out_path.display(), why),
-        Ok(file) => file
-    };
+    // let mut file = match File::create(&out_path) {
+    //     Err(why) => panic!("Could not create {}: {}", out_path.display(), why),
+    //     Ok(file) => file
+    // };
 
-    match file.write_all(assembly.as_bytes()) {
-        Err(why) => panic!("Could not write to {}: {}", out_path.display(), why),
-        Ok(_) => println!("Success!")
-    };
+    // match file.write_all(assembly.as_bytes()) {
+    //     Err(why) => panic!("Could not write to {}: {}", out_path.display(), why),
+    //     Ok(_) => println!("Success!")
+    // };
 
-    Command::new("gcc")
-        .arg(&out_file)
-        .arg("-o")
-        .arg(base_path)
-        .output()
-        .expect("Failed to execute gcc");
+    // Command::new("gcc")
+    //     .arg(&out_file)
+    //     .arg("-o")
+    //     .arg(base_path)
+    //     .output()
+    //     .expect("Failed to execute gcc");
 }
