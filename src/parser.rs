@@ -146,7 +146,7 @@ impl Parser {
                 Token::Addition => {
                     Some(AST::new(Symbol::BinaryOperator(BinaryOperator::Addition), vec![first_child, next_term]))
                 },
-                Token::Multiplication => {
+                Token::Minus => {
                     Some(AST::new(Symbol::BinaryOperator(BinaryOperator::Subtraction), vec![first_child, next_term]))
                 },
                 _ => { panic!("Could not parse {:?} in expression", token); }

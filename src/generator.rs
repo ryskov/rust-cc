@@ -4,9 +4,11 @@ use Symbol;
 use ExpressionType;
 use StatementType;
 use UnaryOperator;
+use BinaryOperator;
 
 struct Generator {
     buf: String,
+    expression_stack: Vec<String>,
     current_expression: Option<ExpressionType>
 }
 
@@ -14,6 +16,7 @@ impl Generator {
     fn new() -> Generator {
         Generator {
             buf: String::new(),
+            expression_stack: Vec::new(),
             current_expression: None
         }
     }
@@ -44,31 +47,59 @@ impl Generator {
     }
 
     fn visit_node(&mut self, ast: &AST) {
-
+        println!("{:#?}", ast.symbol);
         match ast.symbol {
             Symbol::Constant(value) => {
-                self.buf.push_str(&format!("movq ${}, %rax\n", value));
+                self.expression_stack.push(format!("movq ${}, %rax\n", value));
             },
             Symbol::UnaryOperator(ref unary_operator) => {
+                let expression_stack_length = self.expression_stack.len();
+
                 match unary_operator {
                     &UnaryOperator::Negation => {
-                        self.buf.push_str("neg %rax\n");
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}neg %rax\n", op1));
                     },
                     &UnaryOperator::BitwiseComplement => {
-                        self.buf.push_str("not %rax\n");
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}not %rax\n", op1));
                     },
                     &UnaryOperator::LogicalNegation => {
-                        self.buf.push_str("cmpq $0, %rax\nmovq $0, %rax\nsete %al\n");
+                        let op1 = self.expression_stack.pop().unwrap();
+                        
+                        self.expression_stack.push(format!("{}cmpq $0, %rax\nmovq $0, %rax\nsete %al\n", op1));
                     }
                 };
             },
             Symbol::BinaryOperator(ref binary_operator) => {
-                panic!("Binary operation not supported yet");
+                match binary_operator {
+                    &BinaryOperator::Addition => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rbx\naddq %rbx, %rax\n", op1, op2));
+                    },
+                    &BinaryOperator::Multiplication => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rbx\nimul %rbx, %rax\n", op1, op2));
+                    },
+                    &BinaryOperator::Subtraction => {
+                        let op1 = self.expression_stack.pop().unwrap();
+                        let op2 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rbx\nsubq %rbx, %rax\n", op1, op2));
+                    }
+                    _ => { panic!("Operation not yet supported"); }
+                };
             },
             Symbol::Statement(ref statement_type) => {
                 match statement_type {
                     &StatementType::Return => {
-                        self.buf.push_str("ret\r\n");
+                        self.buf.push_str(&format!("{}ret\n", self.expression_stack[self.expression_stack.len() - 1]));
                     },
                     _ => { panic!("Unsupported statement type: {:#?}", statement_type); }
                 }
