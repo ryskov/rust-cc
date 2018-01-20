@@ -36,6 +36,7 @@ fn main() {
 
     let assembly = generator::generate(ast);
 
+    println!("Generation complete:\r\n{}", assembly);
     let base_path = &file_name.to_string()[0..file_name.len() - 2];
     let out_file = format!("{}.s", base_path);
 

@@ -11,6 +11,7 @@ pop %rbx
 addq %rbx, %rax
 push %rax
 movq $2, %rax
+not %rax
 push %rax
 movq $2, %rax
 push %rax
