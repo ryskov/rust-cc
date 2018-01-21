@@ -125,8 +125,138 @@ impl Parser {
 
         AST::new(Symbol::Statement(StatementType::Return), vec![expression])
     } 
-
+    
     fn parse_expression(&mut self) -> AST {
+        let logical_and_expression = self.parse_logical_and_expression();
+
+        let mut last_result: Option<AST> = None;
+
+        let mut next = self.peek();
+
+        while next == Token::LogicalOr {
+            let token = self.next_token();
+            let next_logical_and_expression = self.parse_logical_and_expression();
+
+            let first_child = match last_result {
+                Some(ref ast) => (*ast).clone(),
+                None => logical_and_expression.clone()
+            };
+
+            last_result = Some(AST::new(Symbol::Expression, vec![first_child, next_logical_and_expression]));
+
+            next = self.peek();
+        }
+
+        match last_result {
+            Some(ast) => ast,
+            None => logical_and_expression
+        }
+    }
+
+    fn parse_logical_and_expression(&mut self) -> AST {
+        let equality_expression = self.parse_equality_expression();
+
+        let mut last_result: Option<AST> = None;
+
+        let mut next = self.peek();
+
+        while next == Token::LogicalAnd {
+            let token = self.next_token();
+            let next_equality_expression = self.parse_equality_expression();
+
+            let first_child = match last_result {
+                Some(ref ast) => (*ast).clone(),
+                None => equality_expression.clone()
+            };
+
+            last_result = Some(AST::new(Symbol::BinaryOperator(BinaryOperator::LogicalAnd), vec![first_child, next_equality_expression]));
+
+            next = self.peek();
+        }
+
+        match last_result {
+            Some(ast) => ast,
+            None => equality_expression
+        }
+    }
+
+    fn parse_equality_expression(&mut self) -> AST {
+        let relational_expression = self.parse_relational_expression();
+
+        let mut last_result: Option<AST> = None;
+
+        let mut next = self.peek();
+
+        while next == Token::Equal || next == Token::NotEqual {
+            let token = self.next_token();
+            let next_relational_expression = self.parse_relational_expression();
+
+            let first_child = match last_result {
+                Some(ref ast) => (*ast).clone(),
+                None => relational_expression.clone()
+            };
+
+            last_result = match token {
+                Token::Equal => {
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::Equal), vec![first_child, next_relational_expression]))
+                },
+                Token::NotEqual => {
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::NotEqual), vec![first_child, next_relational_expression]))
+                },
+                _ => { panic!("Could not parse {:?} in expression", token); }
+            };
+
+            next = self.peek();
+        }
+
+        match last_result {
+            Some(ast) => ast,
+            None => relational_expression
+        }
+    }
+
+    fn parse_relational_expression(&mut self) -> AST {
+        let additive_expression = self.parse_additive_expression();
+
+        let mut last_result: Option<AST> = None;
+
+        let mut next = self.peek();
+
+        while next == Token::LessThan || next == Token::LessThanOrEqual || next == Token::GreaterThan || next == Token::GreaterThanOrEqual {
+            let token = self.next_token();
+            let next_additive_expression = self.parse_additive_expression();
+
+            let first_child = match last_result {
+                Some(ref ast) => (*ast).clone(),
+                None => additive_expression.clone()
+            };
+
+            last_result = match token {
+                Token::LessThan => {
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::LessThan), vec![first_child, next_additive_expression]))
+                },
+                Token::LessThanOrEqual => {
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::LessThanOrEqual), vec![first_child, next_additive_expression]))
+                },
+                Token::GreaterThan => {
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::GreaterThan), vec![first_child, next_additive_expression]))
+                },
+                Token::GreaterThanOrEqual => {
+                    Some(AST::new(Symbol::BinaryOperator(BinaryOperator::GreaterThanOrEqual), vec![first_child, next_additive_expression]))
+                },
+                _ => { panic!("Could not parse {:?} in expression", token); }
+            };
+
+            next = self.peek();
+        }
+
+        match last_result {
+            Some(ast) => ast,
+            None => additive_expression
+        }
+    }
+
+    fn parse_additive_expression(&mut self) -> AST {
         let term = self.parse_term();
 
         let mut last_result: Option<AST> = None;

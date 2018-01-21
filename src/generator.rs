@@ -1,23 +1,20 @@
 use AST;
 
 use Symbol;
-use ExpressionType;
 use StatementType;
 use UnaryOperator;
 use BinaryOperator;
 
 struct Generator {
     buf: String,
-    expression_stack: Vec<String>,
-    current_expression: Option<ExpressionType>
+    expression_stack: Vec<String>
 }
 
 impl Generator {
     fn new() -> Generator {
         Generator {
             buf: String::new(),
-            expression_stack: Vec::new(),
-            current_expression: None
+            expression_stack: Vec::new()
         }
     }
 
@@ -53,8 +50,6 @@ impl Generator {
                 self.expression_stack.push(format!("movq ${}, %rax\n", value));
             },
             Symbol::UnaryOperator(ref unary_operator) => {
-                let expression_stack_length = self.expression_stack.len();
-
                 match unary_operator {
                     &UnaryOperator::Negation => {
                         let op1 = self.expression_stack.pop().unwrap();
@@ -104,8 +99,14 @@ impl Generator {
                         let op2 = self.expression_stack.pop().unwrap();
 
                         self.expression_stack.push(format!("{}push %rax\n{}pop %rbx\nmovq $0,%rdx\nidivq %rbx\n", op1, op2));
-                    }
-                    _ => { panic!("Operation not yet supported"); }
+                    },
+                    &BinaryOperator::Equal => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq %rax,%rdx\nmovq $0,%rax\nsete %al\n", op1, op2));
+                    },
+                    _ => panic!("Not supported")
                 };
             },
             Symbol::Statement(ref statement_type) => {

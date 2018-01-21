@@ -95,8 +95,18 @@ impl Lexer {
                     Token::BitwiseComplementOperator
                 },
                 '!' => {
-                    self.pos += 1;
-                    Token::LogicalNegationOperator
+                    let end_byte_offset = self.scan_until(current_byte_offset, |c| {
+                        match c {
+                            '=' => false,
+                            _ => true
+                        }
+                    });
+
+                    match &self.buf[current_byte_offset..end_byte_offset] {
+                        "!=" => Token::NotEqual,
+                        "!" => Token::LogicalNegationOperator,
+                        _ => panic!("Unknown token {}", &self.buf[current_byte_offset..end_byte_offset])
+                    }
                 },
                 '+' => {
                     self.pos += 1;
@@ -109,6 +119,78 @@ impl Lexer {
                 '/' => {
                     self.pos += 1;
                     Token::Division
+                },
+                '&' => {
+                    let end_byte_offset = self.scan_until(current_byte_offset, |c| {
+                        match c {
+                            '&' => false,
+                            _ => true
+                        }
+                    });
+
+                    match &self.buf[current_byte_offset..end_byte_offset] {
+                        "&&" => Token::LogicalAnd,
+                        "&" => Token::BitwiseAnd,
+                        _ => panic!("Unknown token {}", &self.buf[current_byte_offset..end_byte_offset])
+                    }
+                },
+                '|' => {
+                    let end_byte_offset = self.scan_until(current_byte_offset, |c| {
+                        match c {
+                            '|' => false,
+                            _ => true
+                        }
+                    });
+
+                    match &self.buf[current_byte_offset..end_byte_offset] {
+                        "||" => Token::LogicalOr,
+                        "|" => Token::BitwiseOr,
+                        _ => panic!("Unknown token {}", &self.buf[current_byte_offset..end_byte_offset])
+                    }
+                },
+                '=' => {
+                    let end_byte_offset = self.scan_until(current_byte_offset, |c| {
+                        match c {
+                            '=' => false,
+                            _ => true
+                        }
+                    });
+
+                    match &self.buf[current_byte_offset..end_byte_offset] {
+                        "==" => Token::Equal,
+                        _ => panic!("Unknown token {}", &self.buf[current_byte_offset..end_byte_offset])
+                    
+                    }
+                },
+                '<' => {
+                    let end_byte_offset = self.scan_until(current_byte_offset, |c| {
+                        match c {
+                            '=' => false,
+                            _ => true
+                        }
+                    });
+
+                    match &self.buf[current_byte_offset..end_byte_offset] {
+                        "<" => Token::LessThan,
+                        "<=" => Token::LessThanOrEqual,
+                        _ => panic!("Unknown token {}", &self.buf[current_byte_offset..end_byte_offset])
+                    
+                    }
+                },
+                '>' => {
+                    let end_byte_offset = self.scan_until(current_byte_offset, |c| {
+                        match c {
+                            '=' => false,
+                            _ => true
+                        }
+                    });
+
+                    match &self.buf[current_byte_offset..end_byte_offset] {
+                        ">" => Token::GreaterThan,
+                        ">=" => Token::GreaterThanOrEqual,
+                        _ => panic!("Unknown token {}", &self.buf[current_byte_offset..end_byte_offset])
+                    
+                    }
                 },
                 c if c.is_alphabetic() => {
                     let end_byte_offset = self.scan_until(current_byte_offset, |c| {

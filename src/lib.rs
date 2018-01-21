@@ -36,14 +36,15 @@ pub enum BinaryOperator {
     Addition,
     Subtraction,
     Multiplication,
-    Division
-}
-
-#[derive(Debug,PartialEq,Clone)]
-pub enum ExpressionType {
-    Constant(usize),
-    UnaryOperation(UnaryOperator),
-    BinaryOperation(BinaryOperator)
+    Division,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
+    Equal,
+    NotEqual,
+    LogicalAnd,
+    LogicalOrfnex
 }
 
 #[derive(Debug,PartialEq,Clone)]
@@ -52,6 +53,10 @@ pub enum Symbol {
     Function(String),
     Statement(StatementType),
     Expression,
+    LogicalAndExpression,
+    EqualityExpression,
+    RelationalExpression,
+    AdditiveExpression,
     Term,
     Factor,
     Constant(usize),
@@ -82,5 +87,15 @@ pub enum Token {
     LogicalNegationOperator,
     Addition,
     Multiplication,
-    Division
+    Division,
+    LogicalAnd,
+    BitwiseAnd,
+    LogicalOr,
+    BitwiseOr,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual
 }
