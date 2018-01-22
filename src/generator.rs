@@ -44,7 +44,6 @@ impl Generator {
     }
 
     fn visit_node(&mut self, ast: &AST) {
-        println!("{:#?}", ast.symbol);
         match ast.symbol {
             Symbol::Constant(value) => {
                 self.expression_stack.push(format!("movq ${}, %rax\n", value));
@@ -74,23 +73,17 @@ impl Generator {
                         let op2 = self.expression_stack.pop().unwrap();
                         let op1 = self.expression_stack.pop().unwrap();
 
-                        println!("{} + {}", op1, op2);
-
                         self.expression_stack.push(format!("{}push %rax\n{}pop %rbx\naddq %rbx, %rax\n", op1, op2));
                     },
                     &BinaryOperator::Multiplication => {
                         let op2 = self.expression_stack.pop().unwrap();
                         let op1 = self.expression_stack.pop().unwrap();
 
-                        println!("{} * {}", op1, op2);
-
                         self.expression_stack.push(format!("{}push %rax\n{}pop %rbx\nimul %rbx, %rax\n", op1, op2));
                     },
                     &BinaryOperator::Subtraction => {
                         let op1 = self.expression_stack.pop().unwrap();
                         let op2 = self.expression_stack.pop().unwrap();
-
-                        println!("{} - {}", op1, op2);
 
                         self.expression_stack.push(format!("{}push %rax\n{}pop %rbx\nsubq %rbx, %rax\n", op1, op2));
                     },
@@ -105,6 +98,48 @@ impl Generator {
                         let op1 = self.expression_stack.pop().unwrap();
 
                         self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq %rax,%rdx\nmovq $0,%rax\nsete %al\n", op1, op2));
+                    },
+                    &BinaryOperator::NotEqual => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq %rax,%rdx\nmovq $0,%rax\nsetne %al\n", op1, op2));
+                    },
+                    &BinaryOperator::GreaterThanOrEqual => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq %rax,%rdx\nmovq $0,%rax\nsetge %al\n", op1, op2));
+                    },
+                    &BinaryOperator::GreaterThan => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq %rax,%rdx\nmovq $0,%rax\nsetg %al\n", op1, op2));
+                    },
+                    &BinaryOperator::LessThanOrEqual => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq %rax,%rdx\nmovq $0,%rax\nsetle %al\n", op1, op2));
+                    },
+                    &BinaryOperator::LessThan => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq %rax,%rdx\nmovq $0,%rax\nsetl %al\n", op1, op2));
+                    },
+                    &BinaryOperator::LogicalOr => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\norq %rax,%rdx\nmovq $0,%rax\nsetne %al\n", op1, op2));
+                    },
+                    &BinaryOperator::LogicalAnd => {
+                        let op2 = self.expression_stack.pop().unwrap();
+                        let op1 = self.expression_stack.pop().unwrap();
+
+                        self.expression_stack.push(format!("{}push %rax\n{}pop %rdx\ncmpq $0,%rdx\nsetne %cl\ncmpq $0,%rax\nsetne %al\n andb %cl, %al\n", op1, op2));
                     },
                     _ => panic!("Not supported")
                 };

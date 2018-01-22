@@ -142,7 +142,7 @@ impl Parser {
                 None => logical_and_expression.clone()
             };
 
-            last_result = Some(AST::new(Symbol::Expression, vec![first_child, next_logical_and_expression]));
+            last_result = Some(AST::new(Symbol::BinaryOperator(BinaryOperator::LogicalOr), vec![first_child, next_logical_and_expression]));
 
             next = self.peek();
         }

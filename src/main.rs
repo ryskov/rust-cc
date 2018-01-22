@@ -59,4 +59,10 @@ fn main() {
         .arg(base_path)
         .output()
         .expect("Failed to execute gcc");
+    
+    let status = Command::new(&format!("./{}", base_path))
+        .status()
+        .expect("Failed to execute");
+
+    println!("{} exited with: {}", &format!("./{}", base_path), status);
 }

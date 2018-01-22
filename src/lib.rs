@@ -44,7 +44,7 @@ pub enum BinaryOperator {
     Equal,
     NotEqual,
     LogicalAnd,
-    LogicalOrfnex
+    LogicalOr
 }
 
 #[derive(Debug,PartialEq,Clone)]

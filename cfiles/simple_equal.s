@@ -1,6 +1,6 @@
 .globl main
 main:
-movq $1, %rax
+movq $2, %rax
 push %rax
 movq $2, %rax
 pop %rbx
